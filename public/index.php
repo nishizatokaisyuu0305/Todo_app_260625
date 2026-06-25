@@ -25,42 +25,19 @@ if ($page < 1) {
 $limit = 5;
 $offset = ($page - 1) * $limit;
 
-
-// データ取得
-$orderBy = ($sort === "asc")
-  ? "asc"
-  : "desc";
-
-if ($keyword === "") {
-  $sql = "
-    select * 
-    from todos 
-    where user_id = ? 
-    order by created_at $orderBy
-    limit $limit offset $offset
-    ";
-  $stmt = $pdo->prepare($sql);
-  $stmt->execute([
-    $_SESSION["user_id"]
-  ]);
-} else {
-  $sql = "
-  select * 
-  from todos 
-  where user_id = ?
-  and title like ? 
-  order by created_at $orderBy
-  limit $limit offset $offset
-  ";
-  $stmt = $pdo->prepare($sql);
-  $stmt->execute([
-    $_SESSION["user_id"],
-    "%" . "$keyword" . "%"
-    ]);
-}
-
-$todos = $stmt->fetchALL(PDO::FETCH_ASSOC);
-
+// modelより処理取得
+$todoModel = new TodoModel($pdo);
+$todos = $todoModel->getTodos(
+  $_SESSION["user_id"],
+  $keyword,
+  $sort,
+  $limit,
+  $offset
+);
+$totalCount = $todoModel->countTodos(
+  $_SESSION["user_id"],
+  $keyword
+);
 
 // 未完了取得,完了済み取得
 $incompleteTodos = [];
@@ -74,36 +51,6 @@ foreach ($todos as $todo) {
   }
 }
 
-
-// 総件数取得
-if ($keyword === "") {
-  $countSql = "
-    select count(*)
-    from todos
-    where user_id = ?
-  ";
-
-  $stmt = $pdo->prepare($countSql);
-  $stmt->execute([
-    $_SESSION["user_id"]
-  ]);
-
-} else {
-  $countSql = "
-    select count(*)
-    from todos
-    where user_id = ?
-    and title like ?
-  ";
-
-  $stmt = $pdo->prepare($countSql);
-  $stmt->execute([
-    $_SESSION["user_id"],
-    "%" . $keyword . "%"
-  ]);
-}
-
-$totalCount = $stmt->fetchColumn();
 $totalPages = ceil($totalCount / $limit);
 
 
