@@ -7,18 +7,13 @@ verifyCsrfToken();
 
 require_once __DIR__ . "/../config/database.php";
 
-// id, title, due_date, category, priorityデータ取得・sql設定
+// id, title, due_date, category, priorityデータ取得
 $id = $_POST["id"];
 $title = trim($_POST["title"]);
 $dueDate = $_POST["due_date"] ?: null;
 $category = $_POST["category"] ?? null;
 $priority = $_POST["priority"] ?? "低";
-$updateSql = "
-UPDATE todos
-SET title = ?, due_date = ?, category = ?, priority = ?
-WHERE id = ?
-and user_id = ?
-";
+
 
 // バリデーション（空文字チェック）
 if ($title === "") {
@@ -33,42 +28,36 @@ if ($title === "") {
 
 
 // 重複チェック
-$checkSql = "
-select * 
-from todos 
-where title = ? 
-and id != ?
-and user_id = ?
-";
-$stmt = $pdo->prepare($checkSql);
-$stmt->execute([
-  $title, 
-  $id,
-  $_SESSION["user_id"]
-  ]);
-$todo = $stmt->fetch(PDO::FETCH_ASSOC);
+require_once __DIR__ . "/../models/TodoModel.php";
+$todoModel = new TodoModel($pdo);
 
-if ($todo) {
+if (
+  $todoModel->existsByTitleForUpdate(
+    $title,
+    $id,
+    $_SESSION["user_id"]
+  )
+) {
   $_SESSION["flash"] = [
     "type" => "error",
-    "message" => "同じTodoが既に存在します"
+    "message" => "同じTodoが存在します"
   ];
 
   header("Location: edit.php?id=" . $id);
   exit;
 }
 
-
-// 登録
-$stmt = $pdo->prepare($updateSql);
-$stmt->execute([
-  $title, 
+// 更新処理
+$todoModel->update(
+  $id,
+  $title,
   $dueDate,
   $category,
   $priority,
-  $id,
   $_SESSION["user_id"]
-  ]);
+);
+
+// 成功メッセージ
 $_SESSION["flash"] = [
   "type" => "success",
   "message" => "タスクを更新しました"

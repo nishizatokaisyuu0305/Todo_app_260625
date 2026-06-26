@@ -167,6 +167,62 @@ class TodoModel
       $userId
     ]);
   }
+
+
+  public function existsByTitleForUpdate(
+    string $title,
+    int $id,
+    int $userId
+  ): bool {
+    $sql = "
+      select id
+      from todos
+      where title = ?
+      and id != ?
+      and user_id = ?
+    ";
+
+    $stmt = $this->pdo->prepare($sql);
+    $stmt->execute([
+      $title,
+      $id,
+      $userId
+    ]);
+
+    return (bool)$stmt->fetch();
+  }
+
+
+  public function update(
+    int $id,
+    string $title,
+    ?string $dueDate,
+    ?string $category,
+    string $priority,
+    int $userId
+  ): bool {
+    $sql = "
+      update todos
+      set
+        title = ?,
+        due_date = ?,
+        category = ?,
+        priority = ?
+      where id = ?
+      and user_id = ?
+    ";
+
+    $stmt = $this->pdo->prepare($sql);
+
+    return $stmt->execute([
+      $title,
+      $dueDate,
+      $category,
+      $priority,
+      $id,
+      $userId
+    ]);
+  }
 }
 
 
