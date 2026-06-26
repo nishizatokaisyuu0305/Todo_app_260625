@@ -25,7 +25,7 @@ if ($page < 1) {
 $limit = 5;
 $offset = ($page - 1) * $limit;
 
-// modelより処理取得
+// ソート・検索・全件取得
 $todoModel = new TodoModel($pdo);
 $todos = $todoModel->getTodos(
   $_SESSION["user_id"],
@@ -39,17 +39,11 @@ $totalCount = $todoModel->countTodos(
   $keyword
 );
 
-// 未完了取得,完了済み取得
-$incompleteTodos = [];
-$completedTodos = [];
+// 完了・未完了処理
+$result = $todoModel->separateTodos($todos);
+$incompleteTodos = $result["incomplete"];
+$completedTodos = $result["completed"];
 
-foreach ($todos as $todo) {
-  if ($todo["status"] == 0) {
-    $incompleteTodos[] = $todo;
-  } else {
-    $completedTodos[] = $todo;
-  }
-}
 
 $totalPages = ceil($totalCount / $limit);
 

@@ -25,17 +25,15 @@ if ($title === "") {
 
 
 // 重複チェック
-$sql = "
-select * 
-from todos 
-where title = ?
-and user_id = ?
-";
-$stmt = $pdo->prepare($sql);
-$stmt->execute([$title, $_SESSION["user_id"]]);
-$existingTodo = $stmt->fetch(PDO::FETCH_ASSOC);
+require_once __DIR__ . "/../models/TodoModel.php";
+$todoModel = new TodoModel($pdo);
 
-if ($existingTodo) {
+if (
+  $todoModel->existsByTitle(
+    $title,
+    $_SESSION["user_id"]
+  )
+) {
   $_SESSION["flash"] = [
     "type" => "error",
     "message" => "同じTodoが既に存在します"
@@ -47,24 +45,13 @@ if ($existingTodo) {
 
 
 // 登録
-$sql = "
-  INSERT INTO todos (
-  title,
-  due_date,
-  category,
-  priority,
-  user_id
-  ) 
-  VALUES (?, ?, ?, ?, ?)
-  ";
-$stmt = $pdo->prepare($sql);
-$stmt->execute([
+$todoModel->create(
   $title,
   $dueDate,
   $category,
   $priority,
   $_SESSION["user_id"]
-  ]);
+);
 
 
 // 成功メッセージ
