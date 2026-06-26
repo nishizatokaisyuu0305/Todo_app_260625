@@ -19,18 +19,15 @@ if (!isset($_POST["id"])) {
 }
 $id = (int)($_POST["id"] ?? 0);
 
-$sql = "
-  select id
-  FROM todos 
-  WHERE id = ?
-  and user_id = ?
-  ";
-$stmt = $pdo->prepare($sql);
-$stmt->execute([
+
+// 存在チェック
+require_once __DIR__ . "/../models/TodoModel.php";
+$todoModel = new TodoModel($pdo);
+
+$todo = $todoModel->findById(
   $id,
   $_SESSION["user_id"]
-  ]);
-$todo = $stmt->fetch(PDO::FETCH_ASSOC);
+);
 
 if (!$todo) {
   $_SESSION["flash"] = [
@@ -42,20 +39,11 @@ if (!$todo) {
   exit;
 }
 
-
 // 削除
-$sql = "
-delete 
-from todos 
-where id = ?
-and user_id = ?
-";
-$stmt = $pdo->prepare($sql);
-$stmt->execute([
+$todoModel->delete(
   $id,
   $_SESSION["user_id"]
-  ]);
-
+);
 
 // 成功メッセージ
 $_SESSION["flash"] = [

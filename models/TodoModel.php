@@ -223,6 +223,48 @@ class TodoModel
       $userId
     ]);
   }
+
+
+  public function findById(
+    int $id,
+    int $userId
+  ): array|false
+  {
+    $sql = "
+      select id
+      from todos
+      where id = ?
+      and user_id =?
+    ";
+
+    $stmt = $this->pdo->prepare($sql);
+    $stmt->execute([
+      $id,
+      $userId
+    ]);
+
+    return $stmt->fetch(PDO::FETCH_ASSOC);
+  }
+
+
+  public function delete(
+    int $id,
+    int $userId
+  ): void
+  {
+    $sql = "
+      delete
+      form todos
+      where id = ?
+      and user_id = ?
+    ";
+
+    $stmt = $this->pdo->prepare($sql);
+    $stmt->execute([
+      $id,
+      $userId
+    ]);
+  }
 }
 
 
