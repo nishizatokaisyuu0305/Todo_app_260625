@@ -1,35 +1,36 @@
 <?php
 
 session_start();
+
+
 // 未ログイン制限
 if (!isset($_SESSION["user_id"])) {
   header("Location: login_form.php");
   exit;
 }
 
+
 // csrf検証
 require_once __DIR__ . "/../includes/csrf.php";
 verifyCsrfToken();
 
 require_once __DIR__ . "/../config/database.php";
-// id/statusデータ取得・実行
+
+
+//id取得・実行 
 if (!isset($_POST["id"])) {
   header("Location: index.php");
   exit;
 }
-$id = (int)($_POST["id"] ?? 0);
-$sql = "
-SELECT id, title, status
-from todos
-WHERE id = ?
-and user_id = ?
-";
-$stmt = $pdo->prepare($sql);
-$stmt->execute([
+
+require_once __DIR__ . "/../models/TodoModel.php";
+$id = (int)$_POST["id"];
+$todoModel = new TodoModel($pdo);
+$todo = $todoModel->findById(
   $id,
   $_SESSION["user_id"]
-  ]);
-$todo = $stmt->fetch(PDO::FETCH_ASSOC);
+);
+
 
 // バリデーション
 if (!$todo) {
@@ -42,26 +43,15 @@ if (!$todo) {
   exit;
 }
 
-// status切替
-if ($todo["status"] == 0) {
-  $newStatus = 1;
-} else {
-  $newStatus = 0;
-}
 
-// UPDATE
-$sql = "
-UPDATE todos
-SET status = ?
-WHERE id = ?
-and user_id = ?
-";
-$stmt = $pdo->prepare($sql);
-$stmt->execute([
-  $newStatus,
+// status切替
+$newStatus = $todo == 0 ? 1 : 0;
+$todoModel->updateStatus(
   $id,
+  $newStatus,
   $_SESSION["user_id"]
-  ]);
+);
+
 
 // フラッシュメッセージ
 $_SESSION["flash"] = [
@@ -69,6 +59,5 @@ $_SESSION["flash"] = [
   "message" => "「" . $todo["title"] . "」の状態を更新しました。"
 ];
 
-// リダイレクト
 header("Location: index.php");
 exit;

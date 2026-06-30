@@ -193,6 +193,7 @@ class TodoModel
   }
 
 
+  // タスクupdate(create.php)
   public function update(
     int $id,
     string $title,
@@ -231,7 +232,7 @@ class TodoModel
   ): array|false
   {
     $sql = "
-      select id
+      select *
       from todos
       where id = ?
       and user_id =?
@@ -261,6 +262,29 @@ class TodoModel
 
     $stmt = $this->pdo->prepare($sql);
     $stmt->execute([
+      $id,
+      $userId
+    ]);
+  }
+
+
+  // statusデータ取得・更新(toggle.php)
+  public function updateStatus(
+    int $id,
+    int $status,
+    int $userId
+  ): void
+  {
+    $sql = "
+    update todos
+    set status = ?
+    where id = ?
+    and user_id = ?
+    ";
+
+    $stmt = $this->pdo->prepare($sql);
+    $stmt->execute([
+      $status,
       $id,
       $userId
     ]);

@@ -1,11 +1,14 @@
 <?php
 
 session_start();
+
+
 // 未ログイン制限
 if(!isset($_SESSION["user_id"])) {
   header("Location: login_form.php");
   exit;
 }
+
 
 // csrfトークン生成
 require_once __DIR__ . "/../includes/csrf.php";
@@ -13,21 +16,22 @@ generateCsrfToken();
 
 require_once __DIR__ . "/../config/database.php";
 
+
 // idとuser_id情報取得・編集SQL実行
 if(!isset($_GET["id"])) {
   header("Location: index.php");
   exit;
 }
-$id = $_GET["id"];
 
-$sql = "SELECT * FROM todos WHERE id = ? and user_id = ?";
-$stmt = $pdo->prepare($sql);
-$stmt->execute([
+require_once __DIR__ . "/../models/TodoModel.php";
+$todoModel = new TodoModel($pdo);
+$todo = $todoModel->findById(
   $id,
   $_SESSION["user_id"]
-  ]);
-$todo = $stmt->fetch(PDO::FETCH_ASSOC);
+);
 
+
+// フラッシュメッセージ
 if(!$todo) {
   $_SESSION["flash"] = [
     "type" => "error",
